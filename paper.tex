@@ -1,3 +1,5 @@
+%%%%%%%% ICML 2024 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
 \documentclass{article}
 
 % Recommended, but optional, packages for figures and better typesetting:
@@ -107,14 +109,14 @@
 \printAffiliationsAndNotice{} % otherwise use the standard text.
 
 \begin{abstract}
-Dataset distillation has emerged as a prominent area of research, aiming to compress large, original datasets into compact, lightweight synthetic datasets. Currently, three main methodologies address this problem; however, they all face a critical limitation. While synthetic images perform well under low image-per-class (IPC) settings, their performance quickly plateaus at higher IPC settings and, in some cases, even falls behind that of coreset selection methods. Our analysis reveals that this phenomenon is primarily due to a lack of diversity in the generated images. This redundancy degrades performance, particularly in high IPC settings. To address this fundamental issue, we propose YONSEI, a novel distillation framework that can be seamlessly integrated into existing approaches. YONSEI facilitates the generation of synthetic images that retain high performance across a wide range of IPC settings, effectively mitigating saturation. When incorporated with existing methods, YONSEI achieves state-of-the-art (SOTA) performance in high IPC settings, even surpassing the performance of networks trained on the full dataset. Moreover, our method shows a very strong capability to generalize to unseen architectures, paving the way to make dataset distillation significantly more practical.
+Dataset distillation has emerged as a prominent area of research, aiming to compress large, original datasets into compact, lightweight synthetic datasets. Currently, three main methodologies address this problem; however, they all face a critical limitation. While synthetic images perform well under low image-per-class (IPC) settings, their performance quickly plateaus at higher IPC settings and, in some cases, even falls behind that of coreset selection methods. Our analysis reveals that this phenomenon is primarily due to a lack of diversity in the generated images. This redundancy degrades performance, particularly in high IPC settings. To address this fundamental issue, we propose ADS (Dataset Distillation via \textbf{A}ppropriate \textbf{D}ifficulty \textbf{S}upervision), a novel distillation framework that can be seamlessly integrated into existing approaches.  ADS facilitates the generation of synthetic images that retain high performance across a wide range of IPC settings, effectively mitigating saturation. When incorporated with existing methods,  ADS achieves SOTA performance in high IPC settings, even surpassing the performance of networks trained on the full dataset. Moreover, our method shows a very strong capability to generalize to unseen architectures, paving the way to make dataset distillation significantly more practical.
 \end{abstract}
 
 
 \section{Introduction}
 \label{sec}
 
-Dataset distillation is the task of synthesizing a small dataset while retaining the informational richness of the original dataset. The original paper frames this as a meta-learning problem, where synthetic images are updated to minimize the loss on real data when a network is trained using the synthetic dataset. However, this approach is computationally impractical, as it requires an intractable amount of computation to back-propagate through the network's optimization graph. To address this challenge, surrogate objectives have been proposed. These surrogates embed information from the real data and update the synthetic images to align with the embedded representations. The embedding process can leverage features, gradients, or training trajectories. These methods have demonstrated significant efficiency, achieving strong performance even without directly optimizing the meta-learning objective.
+Dataset distillation is the task of synthesizing a small dataset while retaining the informational richness of the original dataset. The original paper frames this as a meta-learning problem, where synthetic images are updated to minimize the loss on real data when a network is trained using the synthetic dataset. However, this approach is computationally impractical, as it requires an intractable amount of computation to back-propagate through the network's optimization graph. To address this challenge, surrogate objectives have been proposed. These surrogates embed information from the real data and update the synthetic images to align with the embedded representations. The embedding process can leverage feature maps, gradients, or training trajectories. These methods have demonstrated significant efficiency, achieving strong performance even without directly optimizing the meta-learning objective.
 
 Despite these advances, dataset distillation fails to scale effectively to high image-per-class (IPC) settings. As shown in the graph above, performance plateaus after approximately 50 IPC, indicating that current methodologies do not scale to higher IPC levels. Further investigation reveals that the generated images contain redundant information, leading to repetitive representations. Ironically, although the goal of dataset distillation is to eliminate redundancies in the original dataset, the synthetic images themselves exhibit redundancy, causing saturation in high-IPC regions.
 
@@ -130,12 +132,46 @@ Our method, implemented on IDC, demonstrates a substantial performance improveme
 \section{Related Works}
 Dataset distillation compresses real images into synthetic images by optimizing the distance between the features of real and synthetic images. Current research primarily focuses on two strategies: gradient/trajectory matching and distribution matching.
 
-\textbf{Gradient/Trajectory Matching}: The core principle of these methods is that synthetic images should produce back-propagation signals similar to those of real images. DC emphasizes matching one-step gradients, while MTT advances this concept by matching entire training trajectories. Although trajectory matching methods are often regarded as the current state-of-the-art (SOTA) framework for dataset distillation, our experiments reveal that gradient matching methods outperform them on large-scale datasets and high-IPC settings. Furthermore, gradient matching methods demonstrate superior generalization across multiple architectures, which is why our work is based on IDC.
+\textbf{Gradient/Trajectory Matching}: The core principle of these methods is that synthetic images should produce back-propagation signals similar to those of real images. DC emphasizes matching one-step gradients, while MTT advances this concept by matching entire training trajectories. Although trajectory matching methods are often regarded as the current SOTA framework for dataset distillation, our experiments reveal that gradient matching methods outperform them on large-scale datasets and high-IPC settings. Furthermore, gradient matching methods demonstrate superior generalization across multiple architectures, which is why our work is based on IDC.
 
 \textbf{Distribution Matching}: Another approach focuses on aligning the feature maps of real and synthetic data. Early methods such as CAFE and DM adopted this strategy but exhibited inferior performance compared to gradient or trajectory matching frameworks. More recent works propose a novel take on distribution matching, generating synthetic images by aligning the batch normalization statistics of real images. However, these methods are highly memory-intensive, requiring approximately 40 times more memory to store soft labels than is needed for synthetic images. Moreover, synthetic images generated using this approach often perform worse than randomly selected images. Based on these findings, we conclude that this line of work is not well-suited for dataset distillation. Consequently, our focus remains on traditional gradient/trajectory matching methods.
 
 
 
+\section{Preliminary}
+
+Dataset distillation is a task of generating a batch of synthetic images $\mathcal{S}$ such that networks trained with $\mathcal{S}$ perform similar to networks that are trained with the original training set $\mathcal{R}$. However, directly optimizing with respect to the generalization performance is very expensive, so surrogate objectives are solved instead to minimize distance between the real and synthetic dataset.
+
+\begin{equation}
+R: \text{Real Dataset}
+\end{equation}
+\begin{equation}
+S: \text{Synthetic Dataset}
+\end{equation}
+\begin{equation}
+S^* = \arg \min_{S} \mathcal{D}(S,R)
+\end{equation}
+
+The distance between the datasets can be measured in term of feature maps, gradients, or training trajectories. 
+
+The  ADS framework can be implemented into all three surrogate objective methods, but as stated earlier, we work on gradient matching methods due to its superior performance and cross architecture generalization. In particular, we build upon IDC, where gradient matching is performed with downsampled synthetic images.
+
+\begin{equation}
+S^* = \arg \min_{S} \mathcal{D} \left( \nabla_{\theta} \mathcal{L}(\theta(\mathcal{A}^*(S))), \nabla_{\theta} \mathcal{L}(\theta(\mathcal{A}(R))) \right)
+\end{equation}
+
+$\mathcal{A}$ represents differential siamese augmentation, and $\mathcal{A}^*$ is upsampling followed by $\mathcal{A}$.
+
+\section{Methodology}
+
+
+
+
+% In the unusual situation where you want a paper to appear in the
+% references without citing it in the main text, use \nocite
+
+\bibliography{example_paper}
+\bibliographystyle{plainnat}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
