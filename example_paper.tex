@@ -183,9 +183,9 @@ This process of training a segment, classifying the real dataset, discarding ima
 However, naively training subsequent segments with the filtered dataset results in performance degradation compared to baseline methods.
 This is mainly due the `forgetting' phenomenon~\cite{} which will be explained in more detail in section 4.
 To state briefly, adding new segments to existing ones causes the model to misclassify images it previously classified correctly.
-To address the forgetting phenomenon, we add a regularization loss derived from previously generated segments, used for generating subsequent segments .
-This regularization loss reduces the forgetting phenomenon, and improves final performance.
-When integrated into existing approaches, our method demonstrates competitive performance compared to baseline methods, especially for datasets with many classes in high IPC regions.
+To mitigate forgetting, we design a regularization loss that is derived from the earlier segments.
+By applying this loss during the training of new segments, we significantly reduce forgetting and achieve better overall performance.
+When integrated into existing approaches, our method demonstrates competitive performance across many baseline methods, especially for datasets with many classes in high IPC regions.
 We summarize our contributions as follows:
 \begin{itemize}
     \item We propose EDD, a novel framework that allows embedding of exclusive information into synthetic images by training segments with different subsets of the real dataset.
