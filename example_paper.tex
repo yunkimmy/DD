@@ -145,11 +145,13 @@ data transmitted between devices and servers, thereby improving communication ef
     \label{fig:loss}
 \end{figure}
 
-Two main approaches to dataset distillation are gradient matching and trajectory matching. Gradient
-matching optimizes the synthetic dataset to produce gradients similar to those of the original dataset,
-while trajectory matching extends this idea by aligning the full training trajectories of the original dataset.
+Various approaches to dataset distillation have been proposed.
+For instance, gradient matching methods optimize synthetic datasets to replicate the gradients
+of the original dataset. Trajectory matching extends this concept by aligning the full
+training trajectories of the original data. Other methods, such as distribution matching,
+aim to generate synthetic images that produce feature maps similar to those of real images.
 These methods have shown effectiveness in generating synthetic datasets with a small images-per-class (IPC).
-However, their performance degrades when generating synthetic datasets with high IPC.
+However, their performance degrades when generating synthetic datasets with high IPC, even falling behind performance of random selection.
 The primary reason for this limitation is that conventional methods are biased toward
 generating synthetic datasets that primarily capture easy samples of the original dataset.
 As illustrated in Fig.~\ref{fig:loss}, both IDC and MTT, the standard gradient matching and
