@@ -60,7 +60,7 @@
 \begin{document}
 
 \twocolumn[
-\icmltitle{Dataset Distillation by Learning Exclusive Information}
+\icmltitle{Dataset Distillation via Dynamic Difficulty Alignment}
 
 % It is OKAY to include author information, even for blind
 % submissions: the style file will automatically remove it for you
@@ -125,83 +125,83 @@ Dataset distillation has emerged as a prominent area of research, aiming to comp
 \section{Introduction}
 \label{submission}
 
-Dataset distillation aims to generate a small synthetic dataset such that models trained on it achieve performance comparable to those trained on the real dataset.
-Existing methods~\cite{} generate synthetic datasets by updating synthetic images to match training properties between synthetic and real datasets, such as gradients, feature maps, or training trajectories generated when training models.
-The synthetic dataset can then be used instead of the real dataset for various tasks such as continual learning~\cite{}, privacy preservation~\cite{}, or neural architecture search~\cite{}.
+The increasing scale of datasets poses significant challenges for training machine
+learning models, including high storage requirements, computational demands, and extensive
+training times. Dataset distillation addresses these challenges by synthesizing a smaller
+dataset from the original dataset, such that models trained on the synthetic dataset achieves
+performance comparable to those trained on the original dataset. This technique has practical
+applications in various domains. For example, in edge computing, where devices such as
+smartphones and IoT sensors have limited storage and computational power, dataset distillation
+enables efficient on-device training. Similarly, in federated learning, it reduces the amount of
+data transmitted between devices and servers, thereby improving communication efficiency.
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=0.5\textwidth]{./images/loss_cosine.png}
-    \caption{Cosine similarity of back-propagation signals of OUR and IDC method. Back-propagation signals are obtained by subtracting initialized images from the generated synthetic images, where both OUR and IDC are initialized with the same set of images. The cosine similarity is averaged for all classes.}
-    \label{fig:training_signal}
+    \includegraphics[width=0.5\textwidth]{./images/loss.png}
+    \caption{Classification accuracy of a model trained with synthetic datasets generated using IDC and our method.
+    The dataset is divided into 10 segments, ordered by loss. Segments on the left represent easy samples,
+    while segments on the right represent hard samples. Performance quickly saturates
+    for hard samples with IDC, while our method maintains high accuracy even for hard samples.}
+    \label{fig:loss}
 \end{figure}
 
-\begin{figure}[t]
-    \centering
-    \begin{subfigure}[b]{0.23\textwidth}  % Ensure the width is valid
-        \centering
-        \includegraphics[width=\textwidth]{./images/vanilla.png}  % Verify path and file existence
-        \caption{IDC}
-        \label{fig:IDC}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.23\textwidth}  % Ensure the width is valid
-        \centering
-        \includegraphics[width=\textwidth]{./images/ours.png}  % Verify path and file existence
-        \caption{OURS}
-        \label{fig:EDD}
-    \end{subfigure}
-    
-    \caption{T-SNE distribution of synthetic images generated from using our and IDC method. IDC generates synthetic images that are clustered around the center, while our method generates synthetic images that cover a wide distribution. Note that images generated in different segments tend to cover different parts of the distribution.}
-    \label{fig:mainfigure}
-\end{figure}
-
-Although existing dataset distillation methods~\cite{} demonstrate strong performance when generating synthetic datasets with few images per class (IPC), they fail to scale effectively to higher IPC settings.
-This limitation arises because synthetic images are updated together in a single batch, which causes the individual synthetic images to become similar.
-The synthetic images are simultaneously updated to minimize the same loss function, resulting in similar back-propagation signals across the batch of synthetic images.
-Consequently, redundant information is embedded in the synthetic images. In contrast, our method divides the synthetic images into exclusive subsets.
-Then each subset is updated using a different loss, which allows the synthetic images to be updated with diverse back-propagation signals.
-This is illustrated in ~Fig.~\ref{fig:training_signal}, where the average cosine similarity of back-propagation signals are plotted for IDC~\cite{} and our method.
-The back-propagation signals are measured by subtracting the initialized image from the generated synthetic image.
-High cosine similarity of IDC indicates that the synthetic images are being updated in a similar direction, while low cosine similarity of our method shows that synthetic images are updated towards different directions.
-Furthermore, ~Fig.~\ref{fig:mainfigure} presents T-SNE~\cite{} distribution of synthetic dataset generated by IDC and our method.
-IDC generates synthetic images that are close in distribution, which indicate the generated synthetic images are similar to each other.
-On the other hand, our method generates synthetic images that cover a wide range of distribution, demonstrating that it captures diverse aspects of the real dataset.
-
-% \begin{figure}[t]
-%     \centering
-%     \includegraphics[width=0.5\textwidth]{icml2025/images/loss.png}
-%     \caption{Histogram of accuracy for cifar-100 dataset}
-%     \label{fig:example_image}
-% \end{figure}
-
-In this paper, we propose \textbf{EDD} (Exclusive Dataset Distillation), a novel framework that can be orthogonally integrated into many existing works~\cite{}.
-To address the issue of shared loss, synthetic images are updated in small exclusive subsets, which refer to as segments.
-Each segment is then trained by matching different subsets of the real dataset, encouraging the segments to learn different parts of the real dataset.
-The process begins by generating the first segment of synthetic images. A model is trained using this segment, and the trained model is then applied to classify images from the real dataset. Among the classified images, a portion of those that are correctly predicted by the model are filtered out, while the misclassified images are retained. These retained, images form a filtered subset of the real dataset, which is then used to train the next segment of synthetic images.
-This process of training a segment, classifying the real dataset, discarding images, and using the filtered real dataset for the next segment is repeated iteratively. This cycle continues until all segments are produced, ensuring that each segment focuses on learning from parts of the real dataset that previous segments struggled with.
-However, naively training subsequent segments with the filtered dataset results in performance degradation compared to baseline methods.
-This is mainly due the `forgetting' phenomenon~\cite{} which will be explained in more detail in section 4.
-To state briefly, adding new segments to existing ones causes the model to misclassify images it previously classified correctly.
-To mitigate forgetting, we design a regularization loss that is derived from the earlier segments.
-By applying this loss during the training of new segments, we significantly reduce forgetting and achieve better overall performance.
-When integrated into existing approaches, our method demonstrates competitive performance across many baseline methods, especially for datasets with many classes in high IPC regions.
-We summarize our contributions as follows:
+Two main approaches to dataset distillation are gradient matching and trajectory matching. Gradient
+matching optimizes the synthetic dataset to produce gradients similar to those of the original dataset,
+while trajectory matching extends this idea by aligning the full training trajectories of the original dataset.
+These methods have shown effectiveness in generating synthetic datasets with a small images-per-class (IPC).
+However, their performance degrades when generating synthetic datasets with high IPC.
+The primary reason for this limitation is that conventional methods are biased toward
+generating synthetic datasets that primarily capture easy samples of the original dataset.
+As illustrated in Fig.~\ref{fig:loss}, both IDC and MTT, the standard gradient matching and
+trajectory matching methods, achieve high classification accuracy for easy samples but
+exhibit significant performance degradation for harder samples.
+Recent methods, such as DATM and SelMatch, have attempted to address the easy-sample bias by
+embedding hard features into synthetic datasets. DATM achieves this by matching specific parts
+of training trajectories, whereas SelMatch relies on heuristic scores to select
+samples of appropriate difficulty for distillation.
+However, these methods rely heavily on heuristics, requiring manual inspection and extensive
+trial-and-error processes. This reliance poses a challenge as datasets vary in their
+characteristics, necessitating separate adjustments for each dataset. Moreover, even within
+the same dataset, additional tuning is often required for different IPC settings.
+To address these challenges, we propose D4A (Dataset Distillation via Dynamic Difficulty Alignment),
+a novel framework that dynamically incorporates hard samples into synthetic datasets without
+relying on heuristic intervention. Instead of manual inspection, D4A employs
+a model-driven approach to identify parts of the original dataset that should be embedded
+into the synthetic dataset.
+The process begins by generating a small subset of synthetic images.
+A model trained on these synthetic images is then used to classify the original dataset.
+Images that are correctly classified are identified as easy samples and discarded,
+while misclassified images are retained as hard samples for embedding into the synthetic dataset.
+This iterative filtering process ensures that subsequent synthetic images emphasize harder samples.
+However, naively filtering out easy samples can lead to performance degradation due
+to the forgetting phenomenon~\cite{}, where adding new synthetic images to the existing synthetic
+dataset causes the trained model to misclassify images it previously classified correctly.
+To mitigate forgetting, we design a regularization loss derived from previously generated
+synthetic images. This loss is applied during the training of subsequent synthetic images,
+reducing forgetting and improving overall performance.
+Our main contributions can be summarized as follows:
 \begin{itemize}
-    \item We propose EDD, a novel framework that allows embedding of exclusive information into synthetic images by training segments with different subsets of the real dataset.
-    \item To address the forgetting phenomenon, we add a regularization loss, which reduces the number of forgotten images when adding new segments.
-    \item Our method shows competitive performance across a variety of datasets, and especially performs well on datasets with many classes. On the tiny-imagenet 50 ipc setting, our method achieves $44.3\%$ accuracy, surpassing the current SOTA by a $4.6\%$ margin.
+    \item We propose D4A, a novel dataset distillation framework that dynamically incorporates hard samples into synthetic datasets without heuristic intervention.  
+    \item We introduce a regularization loss to mitigate the forgetting phenomenon, reducing misclassifications caused by the addition of new synthetic segments.  
+    \item Our method achieves state-of-the-art performance across diverse datasets. For example, in the Tiny-ImageNet 50 IPC setting, D4A achieves 44.3\% accuracy, outperforming the previous best method by a margin of 4.6\%.  
 \end{itemize}
 
 
 \section{Related Works}
-Dataset distillation compresses real images into synthetic images by optimizing the distance between the features of real and synthetic images. Current research primarily focuses on two strategies: gradient/trajectory matching and distribution matching.
+Dataset distillation compresses real images into synthetic images by optimizing the distance between the features of real and synthetic images.
+Current research primarily focuses on two strategies: gradient/trajectory matching and distribution matching.
 
-\textbf{Gradient/Trajectory Matching}: The core principle of these methods is that synthetic images should produce back-propagation signals similar to those of real images. DC emphasizes matching one-step gradients, while MTT advances this concept by matching entire training trajectories. Although trajectory matching methods are often regarded as the current SOTA framework for dataset distillation, our experiments reveal that gradient matching methods outperform them on large-scale datasets and high-IPC settings. Furthermore, gradient matching methods demonstrate superior generalization across multiple architectures, which is why we mainly implement our method to gradient matching frameworks.
+\textbf{Gradient/Trajectory Matching}: The core principle of these methods is that synthetic images should produce back-propagation signals similar to those of real images when training models.
+DC~\cite{} proposes to match one-step gradients, while MTT~\cite{} advances this concept by matching entire training trajectories.
+Although trajectory matching methods are often regarded as the current SOTA framework for dataset distillation, our experiments reveal that gradient matching methods outperform them on large-scale datasets and high-IPC settings.
+Furthermore, gradient matching methods demonstrate superior generalization across multiple architectures, which is why we mainly implement our method to gradient matching frameworks.
 
-\textbf{Distribution Matching}: Another approach focuses on aligning the feature maps of real and synthetic data. Early methods such as CAFE and DM adopted this strategy but exhibited inferior performance compared to gradient or trajectory matching frameworks. More recent works propose a novel take on distribution matching, generating synthetic images by aligning the batch normalization statistics of real images. However, these methods are highly memory-intensive, requiring approximately 40 times more memory to store soft labels than is needed for synthetic images. Moreover, synthetic images generated using this approach often perform worse than randomly selected images. Based on these findings, we conclude that this line of work is not well-suited for dataset distillation. Consequently, our focus remains on traditional gradient/trajectory matching methods.
-
-
+\textbf{Distribution Matching}: An alternative approach involves aligning the feature maps of real and synthetic data.
+Early methods such as CAFE and DM employed this strategy but showed inferior performance compared to gradient or trajectory matching frameworks.
+Recent advances in this domain propose aligning the batch normalization statistics of real and synthetic images to generate synthetic data.
+However, these methods are highly memory-intensive, requiring roughly 40 times more memory to store soft labels than synthetic images themselves.
+Additionally, the synthetic images generated using this approach often perform worse than randomly selected images.
+Given these limitations, we conclude that distribution matching methods are not well-suited for dataset distillation. Therefore, our work focuses on enhancing traditional gradient/trajectory matching approaches.
 
 \section{Preliminary}
 
