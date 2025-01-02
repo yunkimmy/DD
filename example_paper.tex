@@ -127,7 +127,7 @@ Dataset distillation has emerged as a prominent area of research, aiming to comp
 
 The increasing scale of datasets poses significant challenges for training machine
 learning models, including high storage requirements, computational demands, and extensive
-training times. Dataset distillation addresses these challenges by synthesizing a smaller
+training times. Dataset distillation addresses these challenges by synthesizing a smaller synthetic
 dataset from the original dataset, such that models trained on the synthetic dataset achieves
 performance comparable to those trained on the original dataset. This technique has practical
 applications in various domains. For example, in edge computing, where devices such as
@@ -160,7 +160,7 @@ embedding hard features into synthetic datasets. DATM achieves this by matching 
 of training trajectories, whereas SelMatch relies on heuristic scores to select
 samples of appropriate difficulty for distillation.
 However, these methods rely heavily on heuristics, requiring manual inspection and extensive
-trial-and-error processes. This reliance poses a challenge as datasets vary in their
+trial-and-error processes. This poses a challenge as datasets vary in their
 characteristics, necessitating separate adjustments for each dataset. Moreover, even within
 the same dataset, additional tuning is often required for different IPC settings.
 To address these challenges, we propose D4A (Dataset Distillation via Dynamic Difficulty Alignment),
